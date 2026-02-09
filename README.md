@@ -70,10 +70,11 @@ In IntelliJ IDEA:
 
 **Easiest way (IntelliJ)**:
 - Open `EmployeemanagementApplication.java`
-- Click green ▶️ play button next to `main` method  
+- Click green play button next to `main` method  
   or right-click → Run 'EmployeemanagementApplication'
 
 **Terminal way**:
 ```bash
 mvn spring-boot:run
+```
 Server starts at: http://localhost:8080
