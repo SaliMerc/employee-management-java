@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Employee Management</title>
+    <style>
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        form { max-width: 500px; margin-bottom: 30px; }
+    </style>
+</head>
+<body>
+<h1>Employee Management System</h1>
+
+<!--Add/update form-->
+<form id="employeeForm">
+    <input type="hidden" id="id" />
+    <input type="text" id="firstName" placeholder="First Name" required><br><br>
+    <input type="text" id="lastName" placeholder="Last Name" required><br><br>
+    <input type="email" id="email" placeholder="Email" required><br><br>
+    <input type="text" id="department" placeholder="Department" required><br><br>
+    <input type="number" id="salary" placeholder="Salary" step="0.01" required><br><br>
+    <button type="submit" id="submitBtn">Add Employee</button>
+    <button type="button" id="cancelBtn" style="display:none;">Cancel</button>
+</form>
+
+<!-- Table -->
+<table id="employeeTable">
+    <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Department</th><th>Salary</th><th>Actions</th></tr></thead>
+    <tbody></tbody>
+</table>
+
+<script>
+    const API = "http://localhost:8080/api/employees";
+    let editingId = null;
+
+    async function loadEmployees() {
+        const res = await fetch(API);
+        const employees = await res.json();
+        const tbody = document.querySelector("#employeeTable tbody");
+        tbody.innerHTML = "";
+        employees.forEach(emp => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                    <td>${emp.id}</td>
+                    <td>${emp.firstName} ${emp.lastName}</td>
+                    <td>${emp.email}</td>
+                    <td>${emp.department}</td>
+                    <td>${emp.salary}</td>
+                    <td>
+                        <button onclick="editEmployee(${emp.id})">Edit</button>
+                        <button onclick="deleteEmployee(${emp.id})">Delete</button>
+                    </td>
+                `;
+            tbody.appendChild(row);
+        });
+    }
+
+    document.getElementById("employeeForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const employee = {
+            firstName: document.getElementById("firstName").value,
+            lastName: document.getElementById("lastName").value,
+            email: document.getElementById("email").value,
+            department: document.getElementById("department").value,
+            salary: parseFloat(document.getElementById("salary").value)
+        };
+
+        if (editingId) {
+            await fetch(`${API}/${editingId}`, { method: "PUT", headers: {"Content-Type":"application/json"}, body: JSON.stringify(employee) });
+        } else {
+            await fetch(API, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(employee) });
+        }
+        resetForm();
+        loadEmployees();
+    });
+
+    async function deleteEmployee(id) {
+        if (confirm("Delete?")) {
+            await fetch(`${API}/${id}`, { method: "DELETE" });
+            loadEmployees();
+        }
+    }
+
+    function editEmployee(id) {
+        fetch(`${API}/${id}`).then(res => res.json()).then(emp => {
+            document.getElementById("id").value = emp.id;
+            document.getElementById("firstName").value = emp.firstName;
+            document.getElementById("lastName").value = emp.lastName;
+            document.getElementById("email").value = emp.email;
+            document.getElementById("department").value = emp.department;
+            document.getElementById("salary").value = emp.salary;
+            editingId = id;
+            document.getElementById("submitBtn").textContent = "Update";
+            document.getElementById("cancelBtn").style.display = "inline";
+        });
+    }
+
+    function resetForm() {
+        document.getElementById("employeeForm").reset();
+        editingId = null;
+        document.getElementById("submitBtn").textContent = "Add Employee";
+        document.getElementById("cancelBtn").style.display = "none";
+    }
+
+    document.getElementById("cancelBtn").onclick = resetForm;
+
+    // Load on start
+    window.onload = loadEmployees;
+</script>
+</body>
+</html>
